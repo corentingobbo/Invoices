@@ -76,9 +76,59 @@ public class DAO {
 	 * taille
 	 * @throws java.lang.Exception si la transaction a échoué
 	 */
-	public void createInvoice(CustomerEntity customer, int[] productIDs, int[] quantities)
-		throws Exception {
-		throw new UnsupportedOperationException("Pas encore implémenté");
+        public void createInvoice(CustomerEntity customer, int[] productIDs, int[] quantities) throws SQLException, Exception {  
+            String req1 = "INSERT INTO Invoice(CustomerID) VALUES (?) ";  /* ID => clé générée auto                                                       */
+            String req2 = "INSERT INTO Item(InvoiceID, Item, ProductID, Quantity, Cost) VALUES (?,?,?,?,?) ";
+            String req3 = "SELECT Price AS PRIX FROM Product WHERE ID = ?";
+            
+             try (Connection myConnection = myDataSource.getConnection();
+                    PreparedStatement statement1 = myConnection.prepareStatement(req1, Statement.RETURN_GENERATED_KEYS);
+                    PreparedStatement statement2 = myConnection.prepareStatement(req2);
+                    PreparedStatement statement3 = myConnection.prepareStatement(req3)) {           
+            
+                myConnection.setAutoCommit(false);
+                
+                try {
+
+                    statement1.setInt(1, customer.getCustomerId());
+                    int numberUpdated1 = statement1.executeUpdate();
+
+                    ResultSet clefs = statement1.getGeneratedKeys(); 
+
+                    clefs.next();
+                    int invoiceID = clefs.getInt(1);
+          
+                    for(int i = 0 ; i < productIDs.length ; i++) {
+                        int idProduit = productIDs[i];
+                        
+                        statement2.setInt(1, invoiceID);
+                        statement2.setInt(2, i);
+                        statement2.setInt(3, idProduit);
+                        statement2.setInt(4, quantities[i]);
+
+                        statement3.setInt(1, idProduit);
+                        float prix = 0f;
+                        
+                        try (ResultSet resultSet = statement3.executeQuery()) {
+				if (resultSet.next()) {
+                                    prix = resultSet.getFloat("PRIX");
+				}
+			}
+                        
+                        statement2.setFloat(5, prix);
+
+                        int numberUpdated2 = statement2.executeUpdate();
+
+                    }
+
+                    myConnection.commit();
+                } catch (Exception e) {
+                    throw e;
+                }
+            }
+           
+
+            
 	}
 
 	/**

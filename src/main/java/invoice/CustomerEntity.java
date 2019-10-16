@@ -1,9 +1,6 @@
 package invoice;
 
-/**
- * Correspond à un enregistrement de la table Customer
- * @author rbastide
- */
+
 public class CustomerEntity {
 	// TODO : ajouter les autres propriétés
 	private int customerId;
